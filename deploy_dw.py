@@ -9,6 +9,15 @@ import datetime
 from datetime import datetime
 import subprocess
 from pathlib import Path
+sys.path.insert(0, 'C:\Snowflake\Code\Data-Git\install\config')
+import config
+import snow_connect
+from snow_setup import set_up as setup_snowflake
+from snow_create_table import create_snow_tables as sn_tab
+# -- (> ---------------------- SECTION=import_connector ---------------------
+# import snowflake.connector
+from snowflake.connector.errors import DatabaseError, ProgrammingError
+# -- <) ---------------------------- END_SECTION ---------------------------
 
 # Parsing command line arguments
 def parseCommandLineAruguments():
@@ -45,7 +54,7 @@ def create_log(log_id, log_file_name, object_name):
     try:
         deploy_version_log = deploy_version.replace('.', '')
         dt = datetime.now().strftime("%Y%m%d%H%M%S")
-        edw_log_dir = "C:\Snowflake\Code\Data-Git\IT\EDS-Cloud-Data-Platform\Finance-BPG\logs\deploy_"
+        edw_log_dir = "C:\Snowflake\Code\Data-Git\logs\deploy_"
         logger = logging.getLogger(log_id)
         logger.setLevel(logging.INFO)
         formatter = logging.Formatter(
@@ -63,6 +72,9 @@ def create_log(log_id, log_file_name, object_name):
     except Exception as e:
         print("Error in Creating log object: ", str(e))
     return create_log_rc, logger, file_name
+
+
+
 
 # Start logging
 log_id = deploy_version
@@ -100,4 +112,20 @@ for i in range(len(deploy_list)):
         print(" Please check Environment details!")
         sys.exit(0)
 log.info("\nRelease Sprint: "+release_sprint+"\nDeployment Status for: "+deploy_list[i].split("|")[1].strip()+ " is "+deployment_status)
-    
+
+
+sys.argv = ['deploy_dw.py','--user','VIJAYGUPTA','--account','kyb40496.prod3.us-west-2.aws']
+connection = snow_connect.create_connection(sys.argv)
+if connection is not None:
+    setup_snowflake(connection)
+    log.info("The Snowflake Connection is Established....")
+    sn_tab(connection)
+    # load_data(connection)
+    print("\nClosing connection...")
+    #--(> ------------------- SECTION=close_connection -----------------
+    connection.close()
+    # -- <) ---------------------------- END_SECTION ---------------------
+else:
+    log.info("The Connection is not Established! Please see details in the log file....")
+    print("The Connection is not Established! Please see details in the log file....")
+    # -- <) ---------------------------- END_SECTION=main --------------------

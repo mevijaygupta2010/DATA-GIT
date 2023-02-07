@@ -1,0 +1,149 @@
+create or replace table PRODUCTDIM
+(
+    FAMILY             VARCHAR(15)           null    ,
+    FAMILY_ALIAS       VARCHAR(25)           null    ,
+    CONSOLIDATION      VARCHAR(1)            null    ,
+    SKU                VARCHAR(15)           null    ,
+    SKU_ALIAS          VARCHAR(25)           null    
+);
+/
+create or replace table FAMILY
+(
+    FAMILYID           INTEGER                not null,
+    FAMILY             VARCHAR(15)           null    ,
+    FAMILY_ALIAS       VARCHAR(25)           null    ,
+    INTRODATE          DATE                   null    ,
+    constraint PK_FAMILY primary key (FAMILYID)
+);
+/
+create or replace table MEASURES
+(
+    SORTKEY            INTEGER                not null,
+    MEASURESID         INTEGER                not null,
+    PARENT             VARCHAR(85)           null    ,
+    CHILD              VARCHAR(85)           not null,
+    MEASURES_ALIAS     VARCHAR(85)           null    ,
+    CONSOLIDATION      VARCHAR(85)           null    ,
+    TWOPASSCALC        VARCHAR(85)           null    ,
+    STORAGE            VARCHAR(85)           null    ,
+    VARIANCEREPORTING  VARCHAR(85)           null    ,
+    TIMEBALANCE        VARCHAR(85)           null    ,
+    SKIP               VARCHAR(85)           null    ,
+    UDA                VARCHAR(85)           null    ,
+    FORMULA            VARCHAR(255)          null    ,
+    COMMENT_ESSBASE    VARCHAR(85)           null    ,
+    constraint PK_MEASURES primary key (MEASURESID)
+);
+/
+create or replace table POPULATION
+(
+    POPULATIONID       INTEGER                not null,
+    POPGROUP           VARCHAR(15)           null    ,
+    POPULATION         INTEGER                null    ,
+    POPULATION_ALIAS   VARCHAR(25)           null    ,
+    constraint PK_POPULATION primary key (POPULATIONID)
+);
+/
+create or replace table REGION
+(
+    REGIONID           INTEGER                not null,
+    REGION             VARCHAR(15)           null    ,
+    UDA                VARCHAR(85)           null    ,
+    DIRECTOR           VARCHAR(50)           null    ,
+    constraint PK_REGION primary key (REGIONID)
+);
+/
+create or replace table SCENARIO
+(
+    SCENARIOID         INTEGER                not null,
+    SCENARIO           VARCHAR(15)           null    ,
+    CONSOLIDATION      VARCHAR(1)            null    ,
+    constraint PK_SCENARIO primary key (SCENARIOID)
+);
+/
+create or replace table SUPPLIER
+(
+    SUPPLIERID         INTEGER                not null,
+    SUPPLIER_ALIAS     VARCHAR(50)           null    ,
+    ADDRESS            VARCHAR(25)           null    ,
+    CITY               VARCHAR(25)           null    ,
+    STATE              VARCHAR(25)           null    ,
+    ZIP                VARCHAR(20)           null    ,
+    COUNTRY            VARCHAR(25)           null    ,
+    constraint PK_SUPPLIER primary key (SUPPLIERID)
+);
+/
+create or replace table PRODUCT
+(
+    PRODUCTID          INTEGER                not null,
+    FAMILYID           INTEGER                null    ,
+    SKU                VARCHAR(15)           null    ,
+    SKU_ALIAS          VARCHAR(25)           null    ,
+    CAFFEINATED        VARCHAR(5)            null    ,
+    OUNCES             INTEGER                null    ,
+    PKGTYPE            VARCHAR(15)           null    ,
+    INTRODATE          DATE                   null    ,
+    constraint PK_PRODUCT primary key (PRODUCTID)
+);
+/
+create or replace table MARKET
+(
+    STATEID            INTEGER                not null,
+    REGIONID           INTEGER                null    ,
+    STATE              VARCHAR(25)           null    ,
+    UDAMKTSIZE         VARCHAR(85)           null    ,
+    UDAMKTTYPE         VARCHAR(85)           null    ,
+    POPULATIONID       INTEGER                null    ,
+    constraint PK_MARKET primary key (STATEID)
+);
+/
+create or replace table SALES
+(
+    STATEID            INTEGER                null    ,
+    PRODUCTID          INTEGER                null    ,
+    SCENARIOID         INTEGER                null    ,
+    MEASURESID         INTEGER                null    ,
+    SUPPLIERID         INTEGER                null    ,
+    TRANSDATE          DATE                   null    ,
+    AMOUNT             FLOAT              null    
+);
+/
+create or replace table SALESFACT
+(
+    STATEID           INTEGER        null    ,
+    PRODUCTID         INTEGER        null    ,
+    SCENARIOID        INTEGER        null    ,
+    SUPPLIERID        INTEGER        null    ,
+    TRANSDATE         DATE	     null    ,
+    SALES             FLOAT      null    ,
+    COGS              FLOAT      null    ,
+    MARKETING         FLOAT      null    ,
+    PAYROLL           FLOAT      null    ,
+    MISC              FLOAT      null    ,
+    OPENINGINVENTORY  FLOAT      null    ,
+    ADDITIONS         FLOAT      null
+);
+/
+alter table PRODUCT add constraint FK_PRODUCT_REF_FAMILY foreign key  (FAMILYID) references FAMILY (FAMILYID);
+/
+alter table MARKET add constraint FK_MARKET_REF_POPULATI foreign key  (POPULATIONID) references POPULATION (POPULATIONID);
+/
+alter table MARKET add constraint FK_MARKET_REF_REGION foreign key  (REGIONID) references REGION (REGIONID);
+/
+alter table SALES add constraint FK_SALESFACT_REF_MARKET foreign key  (STATEID) references MARKET (STATEID);
+/
+alter table SALES add constraint FK_SALESFACT_REF_MEASURES foreign key  (MEASURESID) references MEASURES (MEASURESID);
+/
+alter table SALES add constraint FK_SALESFACT_REF_PRODUCT foreign key  (PRODUCTID) references PRODUCT (PRODUCTID);
+/
+alter table SALES add constraint FK_SALESFACT_REF_SCENARIO foreign key  (SCENARIOID) references SCENARIO (SCENARIOID);
+/
+alter table SALES add constraint FK_SALESFACT_REF_SUPPLIER foreign key  (SUPPLIERID) references SUPPLIER (SUPPLIERID);
+/
+alter table SALESFACT add constraint FK_SFACT1_REF_MARKET foreign key  (STATEID) references MARKET (STATEID);
+/
+alter table SALESFACT add constraint FK_SFACT1_REF_PRODUCT foreign key  (PRODUCTID) references PRODUCT (PRODUCTID);
+/
+alter table SALESFACT add constraint FK_SFACT1_REF_SCENARIO foreign key  (SCENARIOID) references SCENARIO (SCENARIOID);
+/
+alter table SALESFACT add constraint FK_SFACT1_REF_SUPPLIER foreign key  (SUPPLIERID) references SUPPLIER (SUPPLIERID)
