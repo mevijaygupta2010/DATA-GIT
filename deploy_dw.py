@@ -129,3 +129,59 @@ else:
     log.info("The Connection is not Established! Please see details in the log file....")
     print("The Connection is not Established! Please see details in the log file....")
     # -- <) ---------------------------- END_SECTION=main --------------------
+
+def load_data(self, conn):
+        """
+            INPUTS:
+            conn is a Connection object returned from snowflake.connector.connect().
+        """
+        
+        
+        print("\nCreating File Format...")
+        # -- (> ----------------------- SECTION=create File Format ---------------------
+        conn.cursor().execute(
+            "create or replace file format "+config.DATABASE_NAME+"."+config.SCHEMA_NAME+".CSV_FORMAT "
+            "type='CSV' "
+            "compression='AUTO' "
+            "FIELD_DELIMITER=',' "
+            "SKIP_HEADER=1;"
+            )
+        # -- <) ---------------------------- END_SECTION -------------------------
+        print("\nCreating Stage...")
+        # -- (> ----------------------- SECTION=create External Stage ---------------------
+      
+        conn.cursor().execute("""
+        create or replace STAGE TBC.INGESTION.TBC_STAGE 
+        URL='s3://vj-snowflake-training' 
+        credentials=(
+            AWS_KEY_ID='{AWS_KEY_ID}'
+            AWS_SECRET_KEY='{AWS_SECRET_KEY}');
+        """.format(AWS_KEY_ID=AWS_ACCESS_KEY_ID ,
+           AWS_SECRET_KEY=AWS_SECRET_ACCESS_KEY 
+        )
+        )
+        # -- <) ---------------------------- END_SECTION -------------------------
+
+        print("\nLoading Data..")
+        # -- (> ----------------------- SECTION=Loading Data ---------------------
+        conn.cursor().execute(
+        "copy into TBC.INGESTION.FAMILY from @TBC.INGESTION.TBC_STAGE/TBC/Family.csv "
+        "file_format = TBC.INGESTION.CSV_FORMAT;"
+        )
+
+        conn.cursor().execute(
+        "copy into TBC.INGESTION.PRODUCTDIM from @TBC.INGESTION.TBC_STAGE/TBC/PRODUCTDIM.csv "
+        "file_format = TBC.INGESTION.CSV_FORMAT;"
+        )
+
+        # -- <) ---------------------------- END_SECTION -------------------------
+        print("\nSelecting from test_table...")
+        # -- (> ----------------------- SECTION=querying_data --------------------
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT FAMILY, FAMILY_ALIAS FROM TBC.INGESTION.Family")
+            for (FAMILY, FAMILY_ALIAS) in cur:
+                print('{0}, {1}'.format(FAMILY, FAMILY_ALIAS))
+        finally:
+            cur.close()
+    # -- <) ---------------------------- END_SECTION -------------------------
